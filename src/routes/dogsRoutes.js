@@ -1,0 +1,11 @@
+const {Router} = require("express")
+const dogsRouter = Router()
+const {getDogsHandler, getDogsIdHandler, createDogHandler} = require("../handlers/dogsHandlers")
+
+dogsRouter.get("/", getDogsHandler)
+
+dogsRouter.get("/:id", getDogsIdHandler)
+
+dogsRouter.post("/", createDogHandler)
+
+module.exports = dogsRouter
