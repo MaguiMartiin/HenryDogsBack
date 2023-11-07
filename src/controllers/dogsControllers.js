@@ -2,11 +2,24 @@ const axios = require('axios')
 const {MY_API_KEY} = process.env
 const { Dog, Temperaments } = require('../db')
 
-const cleanDogs = (arr) => {
-    return arr.map((elem)=>{
-        const temperamentArray = elem.temperament ? elem.temperament.split(', ') : []
+const imageDog = async (id) => {
+    try {
+        const imageId = (await axios.get(`https://api.thedogapi.com/v1/images/search?breed_ids=${id}&include_breeds=true`)).data
+        if (imageId && imageId.length > 0) {
+            const imageURL = imageId[0].url;
+            return imageURL
+    } else {throw new Error("No se encontraron imágenes para este perro.")}
+    } catch (error) {
+        console.error("Error al obtener la URL de la imagen del perro", error)
+    }
+}
+
+const cleanDogs = async (arr) => {
+    const cleanedDogs = await Promise.all(arr.map(async (elem) => {
+        const temperamentArray = elem.temperament ? elem.temperament.split(', ') : [];
         const weight = elem.weight.metric.split(" ")
         const height = elem.height.metric.split(" ")
+        const imageDogI = await imageDog(elem.id)
         return {
             name: elem.name,
             heightMin: height[0],
@@ -15,10 +28,12 @@ const cleanDogs = (arr) => {
             weightMax: weight[weight.length - 1],
             id: elem.id,
             yearsOfLife: elem.life_span,
-            image: elem.reference_image_id,
+            image: imageDogI,
             temperament: temperamentArray,
-            created: false,}
-    })
+            created: false
+        }
+    }))
+    return cleanedDogs
 }
 
 const getDogsApi = async () => {
